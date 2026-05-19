@@ -1,0 +1,10 @@
+# Used on the server next to a `.env` file (do not commit secrets).
+# Set SIGN_FASHION_IMAGE once, e.g. SIGN_FASHION_IMAGE=yourdockeruser/sign-fashion:latest
+services:
+  web:
+    image: ${SIGN_FASHION_IMAGE:?Set SIGN_FASHION_IMAGE in .env}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env

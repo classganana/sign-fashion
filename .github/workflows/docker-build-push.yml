@@ -1,15 +1,22 @@
-# Build & push to Docker Hub: iamcyberster/sign-fashion (IMAGE_NAME must match repo name).
+# Docker Hub image: ${DOCKER_USERNAME}/sign-fashion
 #
-# Repository secrets (Settings → Secrets and variables → Actions):
-#   DOCKER_USERNAME   e.g. iamcyberster
-#   DOCKER_PASSWORD   Hub access token
+# GitHub Actions secrets (Settings → Secrets and variables → Actions):
+#   DOCKER_USERNAME    Docker Hub username
+#   DOCKER_PASSWORD    Docker Hub access token (not account password)
 #   NEXT_PUBLIC_SITE_URL
-#   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME   (optional)
-#   NEXT_PUBLIC_INSTAGRAM_URL            (optional)
+#   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME   optional
+#   NEXT_PUBLIC_INSTAGRAM_URL             optional
 #
-# Step 2 (later): add deploy job + docker-compose + EC2.
+# Deploy (EC2):
+#   EC2_HOST      host or IP
+#   EC2_USER      SSH user (e.g. ubuntu, ec2-user)
+#   EC2_SSH_KEY   private key (full PEM, paste as secret)
+#
+# On the EC2 host: clone this repo (or copy docker-compose.yml), create ~/sign-fashion/.env with
+# SIGN_FASHION_IMAGE=<DOCKER_USERNAME>/sign-fashion:latest
+# plus runtime vars: MONGODB_URI, ADMIN_SESSION_TOKEN, CLOUDINARY_* , etc.
 
-name: Docker build and push
+name: Docker Build and Push
 
 on:
   push:
@@ -54,3 +61,22 @@ jobs:
             NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
             NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
             NEXT_PUBLIC_INSTAGRAM_URL=${{ secrets.NEXT_PUBLIC_INSTAGRAM_URL }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          command_timeout: 15m
+          script: |
+            cd ~/sign-fashion
+            docker compose pull
+            docker compose up -d --no-deps --force-recreate
+            docker image prune -f
+            docker ps

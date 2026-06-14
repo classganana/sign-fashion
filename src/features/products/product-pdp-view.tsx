@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/ui/product-card";
 import { RecentlyViewedRail } from "@/features/product-discovery/recently-viewed-rail";
 import { RecentlyViewedSync } from "@/features/products/recently-viewed-sync";
 import { PdpCommerceIsland } from "@/features/products/pdp-commerce-island";
+import { DeliveryAvailabilityChecker } from "@/features/delivery";
 import { formatInrFromMinorUnits } from "@/lib/money";
 import { productTagLabel } from "@/lib/product-display";
 import { cn } from "@/lib/utils";
@@ -147,6 +148,8 @@ export function ProductPdpView(props: ProductPdpViewProps) {
                 </ul>
               </div>
             : null}
+
+            <DeliveryAvailabilityChecker />
 
             <div className="space-y-4">
               <p className='text-muted-foreground text-[0.62rem] font-medium tracking-[0.32em] uppercase'>
